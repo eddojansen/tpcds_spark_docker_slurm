@@ -1,0 +1,7 @@
+$SPARK_HOME/bin/spark-submit \
+  --master $SPARK_MASTER_URL \
+  --conf spark.eventLog.enabled=true \
+  --conf spark.sql.files.maxPartitionBytes=2g \
+  --conf spark.locality.wait=0 \
+  --conf spark.driver.extraClassPath=$SPARK_RAPIDS_PLUGIN_JAR:$SPARK_RAPIDS_PLUGIN_INTEGRATION_TEST_JAR:$CUDF_JAR \
+  --conf spark.executor.extraClassPath=/usr/local/cuda/lib64:/usr/local/cuda/lib64:/opt/ucx/lib:$SPARK_RAPIDS_PLUGIN_JAR:$SPARK_RAPIDS_PLUGIN_INTEGRATION_TEST_JAR:$CUDF_JAR \
