@@ -19,7 +19,7 @@
 
 set -eux
 
-## Update JAR names and download URL's
+## JAR names and download URL's (update when required)
 CUDF_URL="https://storage.googleapis.com/mirror_rapids_ej/cudf-0.18-20210112.093909-33-cuda11.jar"
 CUDF_NAME="cudf-0.18-20210112.093909-33-cuda11.jar"
 RAPIDS_SPARK_URL="https://storage.googleapis.com/mirror_rapids_ej/rapids-4-spark_2.12-0.4.0-20210112.085853-45.jar"
@@ -29,33 +29,32 @@ RAPIDS_SPARK_SQL_NAME="rapids-4-spark-sql_2.12-0.4.0-20210112.085254-46.jar"
 RAPIDS_TESTS_URL="https://storage.googleapis.com/mirror_rapids_ej/rapids-4-spark-integration-tests_2.12-0.4.0-20210112.090812-45-jar-with-dependencies.jar"
 RAPIDS_TESTS_NAME="rapids-4-spark-integration-tests_2.12-0.4.0-20210112.090812-45-jar-with-dependencies.jar"
 
-## Provide mountpoint for shared filesystem for config
-export MOUNT="/data"
+## Mountpoint for shared filesystem (required for config)
+MOUNT="/data"
 
 ## Set TPCDS home
-export TPCDS_HOME="${MOUNT}/tpcds"
+TPCDS_HOME="${MOUNT}/tpcds"
 
-## When using S3 for the data set, change the below values accordingly
-INPUT_PATH="gs://ec-benchmark-data/tpc-ds/tpcds_sf3000-parquet/useDecimal=true,useDate=true,filterNull=false"
-##OUTPUT_PATH="file:///opt/results"
-S3_ENDPOINT="https://storage.googleapis.com"
-S3_ENDPOINT=""
-S3A_CREDS_USR=""
-S3A_CREDS_PSW=""
+## Enable/Disable data set generation.
+DATAGEN="false"
 
-## TPCDS test settings
-SCALEFACTOR=3000
-INPUT_FORMAT="parquet"
+## TPCDS file settings
 ##INPUT_PATH="file://${MOUNT}/sf${SCALEFACTOR}-${INPUT_FORMAT}/useDecimal=true,useDate=true,filterNull=false"
 ##OUTPUT_PATH="file://${MOUNT}//sf${SCALEFACTOR}-output"
-OUTPUT_FORMAT="parquet"
 
+## TPCDS s3 settings
 INPUT_PATH="gs://ec-benchmark-data/tpc-ds/tpcds_sf3000-parquet/useDecimal=true,useDate=true,filterNull=false"
 OUTPUT_PATH="file://${MOUNT}/results"
 S3_ENDPOINT="https://storage.googleapis.com"
 S3A_CREDS_USR=""
 S3A_CREDS_PSW=""
 
+## TPCDS format settings
+INPUT_FORMAT="parquet"
+OUTPUT_FORMAT="parquet"
+
+## TPCDS test settings
+SCALEFACTOR=3000
 BENCHMARK="tpcds"
 ITERATIONS=1
 QUERY="q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 \
@@ -70,28 +69,28 @@ QUERY="q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 \
   q90 q91 q92 q93 q94 q95 q96 q97 q98 q99"
 
 ## Enable or disable GPU with "true" or "false"
-export ENABLE_GPU="true"
+ENABLE_GPU="true"
 
 ## Set threads per GPU
-export CONCURRENTGPU=2
+CONCURRENTGPU=1
 
 ## Set shuffle.partitions, depends on the dataset size: 1T=1048576M / 200 = 5242
-export SHUFFLE_PARTITIONS=800
+SHUFFLE_PARTITIONS=5000
 
 ## Set Spark SQL partition size
-export MAXPARTITIONBYTES="128M"
+MAXPARTITIONBYTES="128M"
 
 ## Configure driver memory
-export DRIVER_MEMORY="20480M"
+DRIVER_MEMORY="10240M"
 
 ## Set WAREHOUSE path
-export WAREHOUSE_PATH="file://$MOUNT/warehouse"
+WAREHOUSE_PATH="file://$MOUNT/warehouse"
 
 ## Set SPILL to storage size
-export SPILL_STORAGE_SIZE="16384M"
+SPILL_STORAGE_SIZE="16384M"
 
 ## Set Spark master
-export MASTER=`hostname`
+MASTER=`hostname`
 
 sudo mkdir -p ${MOUNT}/conf
 sudo chown -R $(id -u):$(id -g) ${MOUNT}/conf
@@ -109,7 +108,7 @@ sudo mkdir -p ${MOUNT}/history
 sudo chown -R $(id -u):$(id -g) ${MOUNT}/history
 
 ## Set RAPIDS dir name
-export SPARK_RAPIDS_DIR="${MOUNT}/sparkRapidsPlugin"
+SPARK_RAPIDS_DIR="${MOUNT}/sparkRapidsPlugin"
 
 ## Set SPARK CUDF JAR
 if [ ! -f "${SPARK_RAPIDS_DIR}/${CUDF_NAME}" ]
@@ -118,7 +117,7 @@ then
 else
     echo "${CUDF_NAME} exists"
 fi
-export SPARK_CUDF_JAR="${SPARK_RAPIDS_DIR}/${CUDF_NAME}"
+SPARK_CUDF_JAR="${SPARK_RAPIDS_DIR}/${CUDF_NAME}"
 
 ## Set RAPIDS 4 SPARK JAR
 if [ ! -f "${SPARK_RAPIDS_DIR}/${RAPIDS_SPARK_NAME}" ]
@@ -127,7 +126,7 @@ then
 else
     echo "${RAPIDS_SPARK_NAME} exists"
 fi
-export SPARK_RAPIDS_PLUGIN_JAR="${SPARK_RAPIDS_DIR}/${RAPIDS_SPARK_NAME}"
+SPARK_RAPIDS_PLUGIN_JAR="${SPARK_RAPIDS_DIR}/${RAPIDS_SPARK_NAME}"
 
 ## Set RAPIDS test JAR
 if [ ! -f "${TPCDS_HOME}/${RAPIDS_TESTS_NAME}" ]
@@ -136,7 +135,7 @@ then
 else
     echo "${RAPIDS_TESTS_NAME} exists"
 fi
-export SPARK_RAPIDS_PLUGIN_INTEGRATION_TEST_JAR="${TPCDS_HOME}/${RAPIDS_TESTS_NAME}"
+SPARK_RAPIDS_PLUGIN_INTEGRATION_TEST_JAR="${TPCDS_HOME}/${RAPIDS_TESTS_NAME}"
 
 ## Set SPARK SQL JAR
 if [ ! -f "${TPCDS_HOME}/${RAPIDS_SPARK_SQL_NAME}" ]
@@ -145,31 +144,30 @@ then
 else
     echo "${RAPIDS_SPARK_SQL_NAME} exists"
 fi
-export SPARK_SQL_JAR="${TPCDS_HOME}/${RAPIDS_SPARK_SQL_NAME}"
+SPARK_SQL_JAR="${TPCDS_HOME}/${RAPIDS_SPARK_SQL_NAME}"
 
-export TOTAL_CORES=$(( ${SLURM_CPUS_PER_TASK_HET_GROUP_1} * ${SLURM_JOB_NUM_NODES_HET_GROUP_1} ))
+TOTAL_CORES=$(( ${SLURM_CPUS_PER_TASK_HET_GROUP_1} * ${SLURM_JOB_NUM_NODES_HET_GROUP_1} ))
 
 if [ ${ENABLE_GPU} = "false" ]
   then 
-       export GPU_PER_NODE=0
-       export NUM_EXECUTORS=${SLURM_JOB_NUM_NODES_HET_GROUP_1}
-       export RESOURCE_GPU_AMT=0
-       export WORKER_OPTS=""
-       export CONCURRENTGPU=1
-       export NUM_EXECUTOR_CORES=$(( ${TOTAL_CORES} / ${NUM_EXECUTORS} ))
+       GPU_PER_NODE=0
+       NUM_EXECUTORS=${SLURM_JOB_NUM_NODES_HET_GROUP_1}
+       RESOURCE_GPU_AMT=0
+       WORKER_OPTS=""
+       CONCURRENTGPU=1
+       NUM_EXECUTOR_CORES=$(( ${TOTAL_CORES} / ${NUM_EXECUTORS} ))
   else 
-       export GPU_PER_NODE=${SLURM_GPUS_PER_NODE_HET_GROUP_1}
-       export NUM_EXECUTORS=$(( ${SLURM_GPUS_PER_NODE_HET_GROUP_1} * ${SLURM_JOB_NUM_NODES_HET_GROUP_1} ))
-       export NUM_EXECUTOR_CORES=$(( ${TOTAL_CORES} / ${NUM_EXECUTORS} ))
-       export RESOURCE_GPU_AMT=$( awk -v e="${NUM_EXECUTORS}" -v c="${TOTAL_CORES}" 'BEGIN { printf "%s", e/c }' </dev/null )
-       export WORKER_OPTS="-Dspark.worker.resource.gpu.amount=${GPU_PER_NODE} -Dspark.worker.resource.gpu.discoveryScript=${MOUNT}/sparkRapidsPlugin/getGpusResources.sh"
+       GPU_PER_NODE=${SLURM_GPUS_PER_NODE_HET_GROUP_1}
+       NUM_EXECUTORS=$(( ${SLURM_GPUS_PER_NODE_HET_GROUP_1} * ${SLURM_JOB_NUM_NODES_HET_GROUP_1} ))
+       NUM_EXECUTOR_CORES=$(( ${TOTAL_CORES} / ${NUM_EXECUTORS} ))
+       RESOURCE_GPU_AMT=$( awk -v e="${NUM_EXECUTORS}" -v c="${TOTAL_CORES}" 'BEGIN { printf "%s", e/c }' </dev/null )
+       WORKER_OPTS="-Dspark.worker.resource.gpu.amount=${GPU_PER_NODE} -Dspark.worker.resource.gpu.discoveryScript=${MOUNT}/sparkRapidsPlugin/getGpusResources.sh"
 fi
 
-export PATH=${PATH}:${SPARK_HOME}/bin:${SPARK_HOME}/sbin
-export EXECUTOR_MEMORY=$(( ${TOTAL_CORES} * ${SLURM_MEM_PER_CPU_HET_GROUP_1} / ${NUM_EXECUTORS} ))
-##export SPARK_WORKER_MEMORY=$(( ${TOTAL_CORES} * ${SLURM_MEM_PER_CPU_HET_GROUP_1} / ${SLURM_JOB_NUM_NODES_HET_GROUP_1} ))M
-export PINNED_POOL_SIZE=$(( ${EXECUTOR_MEMORY} / $GPU_PER_NODE ))M
-export EXECUTOR_MEMORY=${EXECUTOR_MEMORY}M 
+PATH=${PATH}:${SPARK_HOME}/bin:${SPARK_HOME}/sbin
+EXECUTOR_MEMORY=$(( ${TOTAL_CORES} * ${SLURM_MEM_PER_CPU_HET_GROUP_1} / ${NUM_EXECUTORS} ))
+PINNED_POOL_SIZE=$(( ${EXECUTOR_MEMORY} / $GPU_PER_NODE ))M
+EXECUTOR_MEMORY=${EXECUTOR_MEMORY}M 
 
 ## FOR DATAGEN ONLY BUT NEEDS ADDITIONAl WORK
 ##sed -i -e "s/__SF__/${SCALEFACTOR}/g" ${TPCDS_HOME}/tpcds_datagen.scala
@@ -261,8 +259,11 @@ srun --het-group=0 -n 1 -N 1 -w `hostname` bash -c $MOUNT/conf/wait-worker.sh
 
 echo "All workers registered!"
 
-## Run for data generation if needed
-##srun --het-group=0 -n 1 -N 1 -w `hostname` docker exec -i master bash -c ${TPCDS_HOME}/datagen.sh
+## Run data generation when enabled
+if [ "$DATAGEN" == "true" ];
+then
+    srun --het-group=0 -n 1 -N 1 -w `hostname` docker exec -i master bash -c ${TPCDS_HOME}/datagen.sh
+fi
 
 ## Run for TPCDS Benchmark
 srun --het-group=0 -n 1 -N 1 -w `hostname` docker exec -i master bash -c ${TPCDS_HOME}/run-tpcds.sh
