@@ -4,6 +4,7 @@
   --input-format ${INPUT_FORMAT} \
   --output ${OUTPUT_PATH}\
   --output-format ${OUTPUT_FORMAT} \
+  --gc-between-runs \
   --configs ${TPCDS_HOME}/tpcds-config \
   --benchmark ${BENCHMARK} \
   --iterations ${ITERATIONS} \

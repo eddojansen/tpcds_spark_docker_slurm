@@ -30,20 +30,20 @@ RAPIDS_TESTS_URL="https://storage.googleapis.com/mirror_rapids_ej/rapids-4-spark
 RAPIDS_TESTS_NAME="rapids-4-spark-integration-tests_2.12-0.4.0-20210112.090812-45-jar-with-dependencies.jar"
 
 ## Mountpoint for shared filesystem (required for config)
-MOUNT="/data"
+export MOUNT="/data"
 
 ## Set TPCDS home
-TPCDS_HOME="${MOUNT}/tpcds"
+export TPCDS_HOME="${MOUNT}/tpcds"
 
 ## Enable/Disable data set generation.
 DATAGEN="false"
 
 ## TPCDS file settings
-##INPUT_PATH="file://${MOUNT}/sf${SCALEFACTOR}-${INPUT_FORMAT}/useDecimal=true,useDate=true,filterNull=false"
+##INPUT_PATH="file://${MOUNT}/sf${SCALEFACTOR}-${INPUT_FORMAT}/useDecimal=false,useDate=true,filterNull=false"
 ##OUTPUT_PATH="file://${MOUNT}//sf${SCALEFACTOR}-output"
 
 ## TPCDS s3 settings
-INPUT_PATH="gs://ec-benchmark-data/tpc-ds/tpcds_sf3000-parquet/useDecimal=true,useDate=true,filterNull=false"
+INPUT_PATH="gs://ec-benchmark-data/tpc-ds/tpcds_sf3000-parquet/useDecimal=false,useDate=true,filterNull=false"
 OUTPUT_PATH="file://${MOUNT}/results"
 S3_ENDPOINT="https://storage.googleapis.com"
 S3A_CREDS_USR=""
@@ -58,15 +58,15 @@ SCALEFACTOR=3000
 BENCHMARK="tpcds"
 ITERATIONS=1
 QUERY="q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 \
-  q11 q12 q13 q14a q14b q15 q16 q17 q18 q19 \
-  q20 q21 q22 q23a q23b q24a q24b q25 q26 q27 q28 q29 \
-  q30 q31 q32 q33 q34 q35 q36 q37 q38 q39a q39b \
-  q40 q41 q42 q43 q44 q45 q46 q47 q48 q49 \
-  q50 q51 q52 q53 q54 q55 q56 q57 q58 q59 \
-  q60 q61 q62 q63 q64 q65 q66 q67 q68 q69 \
-  q70 q71 q73 q74 q75 q76 q77 q78 q79 \
-  q80 q81 q82 q83 q84 q85 q86 q87 q88 q89 \
-  q90 q91 q92 q93 q94 q95 q96 q97 q98 q99"
+ q11 q12 q13 q14a q14b q15 q16 q17 q18 q19 \
+ q20 q21 q22 q25 q26 q27 q28 q29 \
+ q30 q31 q32 q33 q34 q35 q36 q37 q38 q39a q39b \
+ q40 q41 q42 q43 q44 q45 q46 q47 q48 q49 \
+ q50 q51 q52 q53 q54 q55 q56 q57 q58 q59 \
+ q60 q61 q62 q63 q64 q65 q66 q67 q68 q69 \
+ q70 q71 q73 q74 q75 q76 q77 q78 q79 \
+ q80 q81 q82 q83 q84 q85 q86 q87 q88 q89 \
+ q90 q91 q92 q93 q94 q95 q96 q97 q98 q99"
 
 ## Enable or disable GPU with "true" or "false"
 ENABLE_GPU="true"
@@ -101,6 +101,7 @@ sudo chmod +x ${MOUNT}/conf/kill*.sh
 sudo cp -r tpcds ${MOUNT}/
 sudo chown -R $(id -u):$(id -g) ${MOUNT}/tpcds
 sudo chmod +x ${MOUNT}/tpcds/datagen.sh
+sudo chmod +x ${MOUNT}/tpcds/run-tpcds.sh
 sudo chmod +x ${MOUNT}/tpcds/tpcds-kit/tools/dsdgen
 sudo cp -r sparkRapidsPlugin ${MOUNT}/
 sudo chown -R $(id -u):$(id -g) ${MOUNT}/sparkRapidsPlugin
@@ -266,8 +267,7 @@ then
 fi
 
 ## Run for TPCDS Benchmark
-srun --het-group=0 -n 1 -N 1 -w `hostname` docker exec -i master bash -c ${TPCDS_HOME}/run-tpcds.sh
-
+srun --het-group=0 -n 1 -N 1 -w `hostname` docker exec -i master /bin/sh -c 'cd ${TPCDS_HOME}; ./run-tpcds.sh'
 #
 sleep infinity
 #
