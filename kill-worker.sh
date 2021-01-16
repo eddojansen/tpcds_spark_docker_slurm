@@ -1,4 +1,5 @@
 #!/bin/bash
+##kill-worker.sh##
 worker=`sudo docker ps |grep -c worker`
 online=1
 

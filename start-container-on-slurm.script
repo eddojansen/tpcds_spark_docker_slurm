@@ -1,4 +1,9 @@
 #!/bin/bash
+##
+## This SLURM script should be submitted from shared storage that all SLURM nodes can reach!
+##
+## The usage of SLURM Heterogeneous groups allows for a more elegant way to distigues between master and slave resources
+##
 #SBATCH --partition=batch
 #SBATCH --distribution=arbitrary
 #SBATCH --output=outfile-%J
@@ -17,6 +22,7 @@
 #SBATCH --mem-per-cpu=3072
 #SBATCH --ntasks-per-node=1
 
+## Show ouput
 set -eux
 
 ## JAR names and download URL's (update when required)
@@ -31,9 +37,6 @@ RAPIDS_TESTS_NAME="rapids-4-spark-integration-tests_2.12-0.4.0-20210112.090812-4
 
 ## Mountpoint for shared filesystem (required for config)
 export MOUNT="/data"
-
-## Set TPCDS home
-export TPCDS_HOME="${MOUNT}/tpcds"
 
 ## Enable/Disable data set generation.
 DATAGEN="false"
@@ -57,40 +60,37 @@ OUTPUT_FORMAT="parquet"
 SCALEFACTOR=3000
 BENCHMARK="tpcds"
 ITERATIONS=1
-QUERY="q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 \
- q11 q12 q13 q14a q14b q15 q16 q17 q18 q19 \
- q20 q21 q22 q25 q26 q27 q28 q29 \
- q30 q31 q32 q33 q34 q35 q36 q37 q38 q39a q39b \
- q40 q41 q42 q43 q44 q45 q46 q47 q48 q49 \
- q50 q51 q52 q53 q54 q55 q56 q57 q58 q59 \
- q60 q61 q62 q63 q64 q65 q66 q67 q68 q69 \
- q70 q71 q73 q74 q75 q76 q77 q78 q79 \
- q80 q81 q82 q83 q84 q85 q86 q87 q88 q89 \
- q90 q91 q92 q93 q94 q95 q96 q97 q98 q99"
+QUERY="q21 q22"
 
 ## Enable or disable GPU with "true" or "false"
 ENABLE_GPU="true"
 
-## Set threads per GPU
+## Set threads per GPU (1)
 CONCURRENTGPU=1
 
 ## Set shuffle.partitions, depends on the dataset size: 1T=1048576M / 200 = 5242
 SHUFFLE_PARTITIONS=5000
 
-## Set Spark SQL partition size
+## Set Spark SQL partition size ("128M")
 MAXPARTITIONBYTES="128M"
 
-## Configure driver memory
+## Configure driver memory ("10240M")
 DRIVER_MEMORY="10240M"
 
 ## Set WAREHOUSE path
 WAREHOUSE_PATH="file://$MOUNT/warehouse"
 
-## Set SPILL to storage size
+## Set SPILL to storage size ("16384M")
 SPILL_STORAGE_SIZE="16384M"
+
+##*** No manual input of variables beyond this point ***##
+##########################################################
 
 ## Set Spark master
 MASTER=`hostname`
+
+## Set TPCDS home
+export TPCDS_HOME="${MOUNT}/tpcds"
 
 sudo mkdir -p ${MOUNT}/conf
 sudo chown -R $(id -u):$(id -g) ${MOUNT}/conf
@@ -165,9 +165,9 @@ if [ ${ENABLE_GPU} = "false" ]
        WORKER_OPTS="-Dspark.worker.resource.gpu.amount=${GPU_PER_NODE} -Dspark.worker.resource.gpu.discoveryScript=${MOUNT}/sparkRapidsPlugin/getGpusResources.sh"
 fi
 
-PATH=${PATH}:${SPARK_HOME}/bin:${SPARK_HOME}/sbin
+##PATH=${PATH}:${SPARK_HOME}/bin:${SPARK_HOME}/sbin
 EXECUTOR_MEMORY=$(( ${TOTAL_CORES} * ${SLURM_MEM_PER_CPU_HET_GROUP_1} / ${NUM_EXECUTORS} ))
-PINNED_POOL_SIZE=$(( ${EXECUTOR_MEMORY} / $GPU_PER_NODE ))M
+PINNED_POOL_SIZE=$(( ${EXECUTOR_MEMORY} / 2 ))M
 EXECUTOR_MEMORY=${EXECUTOR_MEMORY}M 
 
 ## FOR DATAGEN ONLY BUT NEEDS ADDITIONAl WORK
@@ -226,7 +226,6 @@ srun --het-group=0 -n 1 -N 1 -w `hostname` docker run -dit \
 -e TPCDS_HOME="${TPCDS_HOME}" \
 -e RESOURCE_GPU_AMT="${RESOURCE_GPU_AMT}" \
 -v ${MOUNT}/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf \
--v ${MOUNT}/history:/opt/spark/history \
 -v ${MOUNT}:/data \
 -v /tmp:/tmp \
 --network host \
@@ -245,10 +244,7 @@ srun --het-group=1 --ntasks=${SLURM_JOB_NUM_NODES_HET_GROUP_1} --ntasks-per-node
 -e SPARK_RAPIDS_PLUGIN_INTEGRATION_TEST_JAR="${SPARK_RAPIDS_PLUGIN_INTEGRATION_TEST_JAR}" \
 -e SPARK_CUDF_JAR="${SPARK_CUDF_JAR}" \
 -e TPCDS_HOME="${TPCDS_HOME}" \
--e PATH="$PATH" \
 -v ${MOUNT}/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf \
--v ${MOUNT}/history:/opt/spark/history \
--v ${MOUNT}/results:/opt/results \
 -v ${MOUNT}:/data \
 -v /tmp:/tmp \
 --network host \
@@ -268,11 +264,12 @@ fi
 
 ## Run for TPCDS Benchmark
 srun --het-group=0 -n 1 -N 1 -w `hostname` docker exec -i master /bin/sh -c 'cd ${TPCDS_HOME}; ./run-tpcds.sh'
-#
-sleep infinity
-#
 
-echo "test complete, check ${MOUNT}/results and ${MOUNT}/history" 
+## Keep cluster alive for additional testing or review
+sleep infinity
+
+## Cleanup (only works if sleep is disabled)
+echo "testing complete, please check ${MOUNT}/tpcds, ${MOUNT}/results and ${MOUNT}/history for relevent output data." 
 srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname`  ${MOUNT}/conf/kill-master.sh || true
 srun --het-group=1 --ntasks="${SLURM_JOB_NUM_NODES_HET_GROUP_1}" ${MOUNT}/conf/kill-worker.sh || true
 echo "Cleanup complete, bye bye.."
