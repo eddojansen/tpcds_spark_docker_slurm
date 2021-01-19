@@ -63,7 +63,6 @@ COPY spark/python/lib /opt/spark/python/lib
 
 ENV SPARK_HOME /opt/spark
 
-WORKDIR /opt/spark/work
-RUN chmod g+w /opt/spark/work
+WORKDIR /data/tpcds
 
 ENTRYPOINT $SPARK_HOME/bin/spark-class org.apache.spark.deploy.master.Master

@@ -5,7 +5,6 @@
   --output ${OUTPUT_PATH}\
   --output-format ${OUTPUT_FORMAT} \
   --configs ${TPCDS_HOME}/tpcds-config \
-  --gc-between-runs \
   --benchmark ${BENCHMARK} \
   --iterations ${ITERATIONS} \
   --query ${QUERY}

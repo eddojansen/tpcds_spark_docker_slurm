@@ -60,7 +60,7 @@ OUTPUT_FORMAT="parquet"
 SCALEFACTOR=3000
 BENCHMARK="tpcds"
 ITERATIONS=1
-QUERY="q21 q22"
+QUERY="q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q35 q93 q95"
 
 ## Enable or disable GPU with "true" or "false"
 ENABLE_GPU="true"
@@ -68,20 +68,24 @@ ENABLE_GPU="true"
 ## Set threads per GPU (1)
 CONCURRENTGPU=1
 
-## Set shuffle.partitions, depends on the dataset size: 1T=1048576M / 200 = 5242
-SHUFFLE_PARTITIONS=5000
+## Set shuffle.partitions, depends on the dataset size: 1T=1048576M / 200 = 5242 but cuDF only supports 2147483647 rows which will become a problem
+## Set shuffle.partitions, depends on the dataset size: 3T=3145728M / 1024 = 3072
+## Set shuffle.partitions, depends on the dataset size: 3T=3145728M / 512 = 6144
+## Set shuffle.partitions, depends on the number of cores: 64
+
+SHUFFLE_PARTITIONS=64
 
 ## Set Spark SQL partition size ("128M")
-MAXPARTITIONBYTES="128M"
+MAXPARTITIONBYTES="256M"
 
 ## Configure driver memory ("10240M")
-DRIVER_MEMORY="10240M"
-
-## Set WAREHOUSE path
-WAREHOUSE_PATH="file://$MOUNT/warehouse"
+DRIVER_MEMORY="1024M"
 
 ## Set SPILL to storage size ("16384M")
-SPILL_STORAGE_SIZE="16384M"
+SPILL_STORAGE_SIZE="12288M"
+
+## Set RAPIDS number of read threads
+MULTI_THREADED_READ=$(( ${SLURM_CPUS_PER_TASK_HET_GROUP_1} * ${SLURM_JOB_NUM_NODES_HET_GROUP_1} ))
 
 ##*** No manual input of variables beyond this point ***##
 ##########################################################
@@ -107,6 +111,8 @@ sudo cp -r sparkRapidsPlugin ${MOUNT}/
 sudo chown -R $(id -u):$(id -g) ${MOUNT}/sparkRapidsPlugin
 sudo mkdir -p ${MOUNT}/history
 sudo chown -R $(id -u):$(id -g) ${MOUNT}/history
+sudo mkdir -p ${MOUNT}/spark-warehouse
+sudo chown -R $(id -u):$(id -g) ${MOUNT}/spark-warehouse
 
 ## Set RAPIDS dir name
 SPARK_RAPIDS_DIR="${MOUNT}/sparkRapidsPlugin"
@@ -167,7 +173,7 @@ fi
 
 ##PATH=${PATH}:${SPARK_HOME}/bin:${SPARK_HOME}/sbin
 EXECUTOR_MEMORY=$(( ${TOTAL_CORES} * ${SLURM_MEM_PER_CPU_HET_GROUP_1} / ${NUM_EXECUTORS} ))
-PINNED_POOL_SIZE=$(( ${EXECUTOR_MEMORY} / 2 ))M
+PINNED_POOL_SIZE=$(( ${EXECUTOR_MEMORY} / 4 ))M
 EXECUTOR_MEMORY=${EXECUTOR_MEMORY}M 
 
 ## FOR DATAGEN ONLY BUT NEEDS ADDITIONAl WORK
@@ -225,6 +231,7 @@ srun --het-group=0 -n 1 -N 1 -w `hostname` docker run -dit \
 -e QUERY="$QUERY" \
 -e TPCDS_HOME="${TPCDS_HOME}" \
 -e RESOURCE_GPU_AMT="${RESOURCE_GPU_AMT}" \
+-e MULTI_THREADED_READ="${MULTI_THREADED_READ}" \
 -v ${MOUNT}/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf \
 -v ${MOUNT}:/data \
 -v /tmp:/tmp \
