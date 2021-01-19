@@ -1,4 +1,4 @@
-# criteo_spark_docker_slurm
+# tpcds_spark_docker_slurm
 
 # Short description:
 tpcds_spark_docker_slurm provides an automated way to run "TPCDS like" benchmarks on a dynamically created Spark cluster that runs in Docker containers 
