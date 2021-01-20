@@ -287,9 +287,7 @@ srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mkdir tpcds-benchmark-result
 srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mkdir tpcds-benchmark-results-$SLURM_JOB_ID/history
 srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mkdir tpcds-benchmark-results-$SLURM_JOB_ID/config
 srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mv outfile-$SLURM_JOB_ID tpcds-test-results-${SLURM_JOB_ID}/
-srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` cp ${TPCDS_HOME}/spark-submit-template.txt ${TPCDS_HOME}/tpcds-config.properties ${TPCDS_HOME}/run-tpcds.sh ${TPCDS_HOME}/benchmark.py ${TPCDS_HOME}/*.json tpcds-benchmark-results-${SLURM_JOB_ID}/config
-srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` rm -rf ${TPCDS_HOME} 
-srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` sudo cp ${MOUNT}/history/* tpcds-benchmark-results-${SLURM_JOB_ID}/history
-srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` rm -rf ${MOUNT}/history ${MOUNT}/spark-warehouse ${MOUNT}/conf ${MOUNT}/sparkRapidsPlugin 
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mv ${TPCDS_HOME}/spark-submit-template.txt ${TPCDS_HOME}/tpcds-config.properties ${TPCDS_HOME}/run-tpcds.sh ${TPCDS_HOME}/benchmark.py ${TPCDS_HOME}/*.json tpcds-benchmark-results-${SLURM_JOB_ID}/config
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` sudo mv ${MOUNT}/history/* tpcds-benchmark-results-${SLURM_JOB_ID}/history
 
 echo "Cleanup complete, bye bye.."
