@@ -59,7 +59,12 @@ OUTPUT_FORMAT="parquet"
 SCALEFACTOR=3000
 BENCHMARK="tpcds"
 ITERATIONS=1
-QUERY="q2" 
+QUERY="q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 \
+ q11 q12 q13 q14 q15 q16 q17 q18 q19 \
+ q20 q21 q22 q23 q24 q25 q26 q27 q28 q29 \
+ q30 q31 q32 q33 q34 q35 q36 q37 q38 q39a q39b \
+ q40 q41 q42 q43 q44 q45 q46 q47 q48 q49 \
+ q50"
 
 ## Enable or disable GPU with "true" or "false"
 ENABLE_GPU="true"
@@ -281,10 +286,10 @@ srun --het-group=1 --ntasks="${SLURM_JOB_NUM_NODES_HET_GROUP_1}" ${MOUNT}/conf/k
 srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mkdir tpcds-benchmark-results-$SLURM_JOB_ID
 srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mkdir tpcds-benchmark-results-$SLURM_JOB_ID/history
 srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mkdir tpcds-benchmark-results-$SLURM_JOB_ID/config
-srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mv outfile-$SLURM_JOB_ID tpcds-benchmark-results-$SLURM_JOB_ID/
-srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` cp ${TPCDS_HOME}/spark-submit-template.txt ${TPCDS_HOME}/tpcds-config.properties ${TPCDS_HOME}/run-tpcds.sh ${TPCDS_HOME}/benchmark.py ${TPCDS_HOME}/*.json tpcds-benchmark-results-$SLURM_JOB_ID/config
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mv outfile-$SLURM_JOB_ID tpcds-test-results-${SLURM_JOB_ID}/
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` cp ${TPCDS_HOME}/spark-submit-template.txt ${TPCDS_HOME}/tpcds-config.properties ${TPCDS_HOME}/run-tpcds.sh ${TPCDS_HOME}/benchmark.py ${TPCDS_HOME}/*.json tpcds-benchmark-results-${SLURM_JOB_ID}/config
 srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` rm -rf ${TPCDS_HOME} 
-srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` sudo cp ${MOUNT}/history/* tpcds-benchmark-results-$SLURM_JOB_ID/history
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` sudo cp ${MOUNT}/history/* tpcds-benchmark-results-${SLURM_JOB_ID}/history
 srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` rm -rf ${MOUNT}/history ${MOUNT}/spark-warehouse ${MOUNT}/conf ${MOUNT}/sparkRapidsPlugin 
 
 echo "Cleanup complete, bye bye.."
