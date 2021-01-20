@@ -22,7 +22,7 @@ val scaleFactor = "__SF__"
 // data format.
 val format = "parquet"
 // If false, float type will be used instead of decimal.
-val useDecimal = true
+val useDecimal = false
 // If false, string type will be used instead of date.
 val useDate = true
 // If true, rows with nulls in partition key will be thrown away.

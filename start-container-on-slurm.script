@@ -15,7 +15,6 @@
 #SBATCH --mem-per-cpu=3072
 #SBATCH --ntasks-per-node=1
 #SBATCH hetjob
-#SBATCH --output=outfile-%J
 #SBATCH --nodes=4
 #SBATCH --cpus-per-task=16
 #SBATCH --gpus-per-node=2
@@ -47,7 +46,7 @@ DATAGEN="false"
 
 ## TPCDS s3 settings
 INPUT_PATH="gs://ec-benchmark-data/tpc-ds/tpcds_sf3000-parquet/useDecimal=false,useDate=true,filterNull=false"
-OUTPUT_PATH="file://${MOUNT}/results"
+OUTPUT_PATH="file://${MOUNT}/output"
 S3_ENDPOINT="https://storage.googleapis.com"
 S3A_CREDS_USR=""
 S3A_CREDS_PSW=""
@@ -60,23 +59,23 @@ OUTPUT_FORMAT="parquet"
 SCALEFACTOR=3000
 BENCHMARK="tpcds"
 ITERATIONS=1
-QUERY="q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 q35 q93 q95"
+QUERY="q2" 
 
 ## Enable or disable GPU with "true" or "false"
 ENABLE_GPU="true"
 
 ## Set threads per GPU (1)
-CONCURRENTGPU=1
+CONCURRENTGPU=2
 
-## Set shuffle.partitions, depends on the dataset size: 1T=1048576M / 200 = 5242 but cuDF only supports 2147483647 rows which will become a problem
-## Set shuffle.partitions, depends on the dataset size: 3T=3145728M / 1024 = 3072
-## Set shuffle.partitions, depends on the dataset size: 3T=3145728M / 512 = 6144
-## Set shuffle.partitions, depends on the number of cores: 64
+## Set shuffle.partitions, depending on the dataset size: 1T=1048576M / 200 = 5242 but cuDF only supports 2147483647 rows which will become a problem
+## Set shuffle.partitions, depending on the dataset size: 3T=3145728M / 1024 = 3072
+## Set shuffle.partitions, depending on the dataset size: 3T=3145728M / 512 = 6144
+## Set shuffle.partitions, depending on the number of cores: 64
 
 SHUFFLE_PARTITIONS=64
 
 ## Set Spark SQL partition size ("128M")
-MAXPARTITIONBYTES="256M"
+MAXPARTITIONBYTES="512M"
 
 ## Configure driver memory ("10240M")
 DRIVER_MEMORY="1024M"
@@ -266,17 +265,26 @@ echo "All workers registered!"
 ## Run data generation when enabled
 if [ "$DATAGEN" == "true" ];
 then
-    srun --het-group=0 -n 1 -N 1 -w `hostname` docker exec -i master bash -c ${TPCDS_HOME}/datagen.sh
+    srun --het-group=0 -n 1 -N 1 -w `hostname` docker exec -i master /bin/sh -c './datagen.sh'
 fi
 
 ## Run for TPCDS Benchmark
-srun --het-group=0 -n 1 -N 1 -w `hostname` docker exec -i master /bin/sh -c 'cd ${TPCDS_HOME}; ./run-tpcds.sh'
+srun --het-group=0 -n 1 -N 1 -w `hostname` docker exec -i master /bin/sh -c './run-tpcds.sh'
 
 ## Keep cluster alive for additional testing or review
-sleep infinity
+#sleep infinity
 
 ## Cleanup (only works if sleep is disabled)
-echo "testing complete, please check ${MOUNT}/tpcds, ${MOUNT}/results and ${MOUNT}/history for relevent output data." 
+echo "testing complete, please check tpcds-benchmark-results-$SLURM_JOB_ID for relevent output data." 
 srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname`  ${MOUNT}/conf/kill-master.sh || true
 srun --het-group=1 --ntasks="${SLURM_JOB_NUM_NODES_HET_GROUP_1}" ${MOUNT}/conf/kill-worker.sh || true
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mkdir tpcds-benchmark-results-$SLURM_JOB_ID
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mkdir tpcds-benchmark-results-$SLURM_JOB_ID/history
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mkdir tpcds-benchmark-results-$SLURM_JOB_ID/config
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mv outfile-$SLURM_JOB_ID tpcds-benchmark-results-$SLURM_JOB_ID/
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` cp ${TPCDS_HOME}/spark-submit-template.txt ${TPCDS_HOME}/tpcds-config.properties ${TPCDS_HOME}/run-tpcds.sh ${TPCDS_HOME}/benchmark.py ${TPCDS_HOME}/*.json tpcds-benchmark-results-$SLURM_JOB_ID/config
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` rm -rf ${TPCDS_HOME} 
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` sudo cp ${MOUNT}/history/* tpcds-benchmark-results-$SLURM_JOB_ID/history
+srun --het-group=0 -n 1 -N 1 --gpus=0 -w `hostname` rm -rf ${MOUNT}/history ${MOUNT}/spark-warehouse ${MOUNT}/conf ${MOUNT}/sparkRapidsPlugin 
+
 echo "Cleanup complete, bye bye.."
