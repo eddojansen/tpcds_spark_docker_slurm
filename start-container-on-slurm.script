@@ -7,7 +7,7 @@
 #SBATCH --partition=batch
 #SBATCH --distribution=arbitrary
 #SBATCH --output=outfile-%J
-##SBATCH --time=600:00
+##SBATCH --time=6000:00
 #SBATCH --nodes=1
 #SBATCH --nodelist=ejansen-worker-1
 #SBATCH --cpus-per-task=16
@@ -75,16 +75,16 @@ CONCURRENTGPU=2
 SHUFFLE_PARTITIONS=64
 
 ## Set Spark SQL partition size ("128M")
-MAXPARTITIONBYTES="512M"
+MAXPARTITIONBYTES="256M"
 
 ## Configure driver memory ("10240M")
-DRIVER_MEMORY="1024M"
+DRIVER_MEMORY="10240M"
 
 ## Set SPILL to storage size ("16384M")
-SPILL_STORAGE_SIZE="12288M"
+SPILL_STORAGE_SIZE="16384M"
 
 ## Set RAPIDS number of read threads
-MULTI_THREADED_READ=$(( ${SLURM_CPUS_PER_TASK_HET_GROUP_1} * ${SLURM_JOB_NUM_NODES_HET_GROUP_1} ))
+MULTI_THREADED_READ=$(( ${SLURM_CPUS_PER_TASK_HET_GROUP_1} * ${SLURM_JOB_NUM_NODES_HET_GROUP_1} / 2 ))
 
 ##*** No manual input of variables beyond this point ***##
 ##########################################################
@@ -172,7 +172,7 @@ fi
 
 ##PATH=${PATH}:${SPARK_HOME}/bin:${SPARK_HOME}/sbin
 EXECUTOR_MEMORY=$(( ${TOTAL_CORES} * ${SLURM_MEM_PER_CPU_HET_GROUP_1} / ${NUM_EXECUTORS} ))
-PINNED_POOL_SIZE=$(( ${EXECUTOR_MEMORY} / 4 ))M
+PINNED_POOL_SIZE=$(( ${EXECUTOR_MEMORY} / 4 / ${CONCURRENTGPU} ))M
 EXECUTOR_MEMORY=${EXECUTOR_MEMORY}M 
 
 ## FOR DATAGEN ONLY BUT NEEDS ADDITIONAl WORK
