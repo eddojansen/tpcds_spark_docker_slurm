@@ -5,9 +5,9 @@ tpcds_spark_docker_slurm provides an automated way to run "TPCDS like" benchmark
 across multiple SLURM nodes.
 
 # Requirements:
-1) Working SLURM environment with or without GPU support
-2) Docker installed on the SLURM nodes
-3) Shared file storage shared across SLURM nodes, the cloned repo needs to be on shared storage for the script to work. (S3 supported for data sets)
+1) Working SLURM environment with GPU support
+2) Docker and NVIDIA container toolkit installed on the SLURM nodes
+3) Shared file storage shared across all SLURM nodes, the cloned repo needs to be on shared storage for the script to work. (S3 supported for data sets)
 4) Support to exclusively use SLURM nodes allowing the "--network host" option in Docker
 5) Sudo access rights on SLURM nodes
 6) SLURM Heterogeneous Job Support. The master will use a different group to prevent allocating valuable resources that will not be used or running on the same node.
@@ -23,52 +23,18 @@ across multiple SLURM nodes.
 # Usage:
 1) To submit the "TPCDS like" workload to the SLURM environment run: sbatch start-container-on-slurm.script
 2) When a job is accepted it will get a job number and create a log file for that job in the current directory
-3) The history files for the jobs can be found in the history folder on the defined shared storage mount-point
-4) The Criteo results can be found in the results folder on the defined shared storage mount-point
+3) After the job has succesfully finished the containers will be shutdown and removed
+4) The TPCDS result files, test config, spark history and SLURM logs will be collected in the current directory with the SLURM batch job ID as prefix
 
 # start-container-on-slurm.script:
 1) Adjust #SBATCH slurm resources as needed.The first resources group is for the master, the second for the workers. Do not change the ntasks per node.
--#SBATCH --partition=batch --> master
--#SBATCH --distribution=arbitrary --> master
--#SBATCH --output=outfile-%J --> master
--#SBATCH --nodes=1 --> master
--#SBATCH --nodelist=ejansen-worker-1 --> master
--#SBATCH --cpus-per-task=16 --> master
--#SBATCH --gpus-per-node=0 --> master
--#SBATCH --mem-per-cpu=3072 --> master
--#SBATCH --ntasks-per-node=1 --> master
--#SBATCH hetjob
--#SBATCH --output=outfile-%J --> workers
--#SBATCH --nodes=4 --> workers
--#SBATCH --cpus-per-task=16 --> workers
--#SBATCH --gpus-per-node=2 --> workers
--#SBATCH --mem-per-cpu=3072 --> workers
--#SBATCH --ntasks-per-node=1 --> workers
 2) Update Dowbload URL's and JAR names as required
-CUDF_URL="https://storage.googleapis.com/mirror_rapids_ej/cudf-0.18-20210112.093909-33-cuda11.jar"
-CUDF_NAME="cudf-0.18-20210112.093909-33-cuda11.jar"
-RAPIDS_SPARK_URL="https://storage.googleapis.com/mirror_rapids_ej/rapids-4-spark_2.12-0.4.0-20210112.085853-45.jar"
-RAPIDS_SPARK_NAME="rapids-4-spark_2.12-0.4.0-20210112.085853-45.jar"
-RAPIDS_SPARK_SQL_URL="https://storage.googleapis.com/mirror_rapids_ej/rapids-4-spark-sql_2.12-0.4.0-20210112.085254-46.jar"
-RAPIDS_SPARK_SQL_NAME="rapids-4-spark-sql_2.12-0.4.0-20210112.085254-46.jar"
-RAPIDS_TESTS_URL="https://storage.googleapis.com/mirror_rapids_ej/rapids-4-spark-integration-tests_2.12-0.4.0-20210112.090812-45-jar-with-dependencies.jar"
-RAPIDS_TESTS_NAME="rapids-4-spark-integration-tests_2.12-0.4.0-20210112.090812-45-jar-with-dependencies.jar"
 3) Provide mount-point for shared filesystem for config
-      -	MOUNT=/data
-3) Enable test data generation when needed with "true" or "false"
-      - DATAGEN="false"
-4) Enable or disable GPU with "true" or "false"
-      - ENABLE_GPU="true"
+3) Enable test data generation when needed with "true" or "false" (still needs some manual input, not finished yet)
+4) Enable or disable GPU with "true" or "false" (not finished yet)
 5) Set threads per GPU
-      - CONCURRENTGPU=1
 6) Set INPUT and OUTPUTH path for file or s3 (aws or gcp)
-      - INPUT_PATH="file://${MOUNT}/sf${SCALEFACTOR}-${INPUT_FORMAT}/useDecimal=true,useDate=true,filterNull=false"
-      - OUTPUT_PATH="file://${MOUNT}//sf${SCALEFACTOR}-output"
-      - INPUT_PATH="gs://ec-benchmark-data/tpc-ds/tpcds_sf3000-parquet/useDecimal=true,useDate=true,filterNull=false"
-      - OUTPUT_PATH="file://${MOUNT}/results"
-      - S3_ENDPOINT="https://storage.googleapis.com"
-      - S3A_CREDS_USR=""
-      - S3A_CREDS_PSW=""
+
 # Docker images:
 1) tcpds_spark_docker_slurm uses the following 2 Docker images:  
       - gcr.io/data-science-enterprise/spark-master-slurm:3.0.1
@@ -105,14 +71,14 @@ RAPIDS_TESTS_NAME="rapids-4-spark-integration-tests_2.12-0.4.0-20210112.090812-4
 6) Cache will be dropped and cleared on all SLURM nodes
 7) Hostnames for all SLURM nodes that participate in the job will be added to the mountpoint/conf/slaves file
 8) Default Spark setting will be added to mountpoint/conf/spark-defaults.conf
-9) When needed master docker image can be removed from first SLURM node (not enabled by default)
+9) When needed master docker image can first be removed from first SLURM node (not enabled by default)
 10) Run Spark master docker container on first SLURM node with:
       - mapped spark-defaults.conf
       - mapped history
       - mapped results
       - mapped ${MOUNT}
       - network host
-11) When needed worker docker image can be removed from all SLURM nodes (not enabled by default)
+11) When needed worker docker image can be first removed from all SLURM nodes (not enabled by default)
 12) Run Spark worker docker container on all SLURM nodes with:
       - mapped spark-defaults.conf
       - mapped history
@@ -120,6 +86,8 @@ RAPIDS_TESTS_NAME="rapids-4-spark-integration-tests_2.12-0.4.0-20210112.090812-4
       - mapped ${MOUNT}
       - network host
 13) Wait until all workers have been registered with the master
-16) Echo test complete message including results and history location
-17) Kill master instance on first SLURM node
-18) Kill worker instance on all other SLURM nodes
+14) Run the datagen job if enabled
+15) Run the TPCDS job as configured
+16) Kill master instance on first SLURM node
+17) Kill worker instance on all other SLURM nodes
+18) Collect results in local folder
