@@ -6,7 +6,7 @@ echo number of workers to be registered: $num_workers
 for i in {1..100}
 do
   sleep $steptime
-  num_reg=`sudo docker logs master |grep -c "Registering worker"`
+  num_reg=`docker logs master |grep -c "Registering worker"`
   if [ $num_reg -eq $num_workers ]
   then
      break

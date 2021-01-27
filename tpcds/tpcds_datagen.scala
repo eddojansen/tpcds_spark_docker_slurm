@@ -18,7 +18,7 @@
 // IMPORTANT: SET PARAMETERS!!!
 
 // TPCDS Scale factor
-val scaleFactor = "__SF__"
+val scaleFactor = "1"
 // data format.
 val format = "parquet"
 // If false, float type will be used instead of decimal.
@@ -33,7 +33,7 @@ val shuffle = true
 // s3/dbfs path to generate the data to.
 // val rootDir = s"s3a://spark-rapids-tpcds/tpcds/sf$scaleFactor-$format/useDecimal=$useDecimal,useDate=$useDate,filterNull=$filterNull"
 //val rootDir = s"hdfs://10.150.224.213:9000/data/tpcds_sf$scaleFactor-$format/useDecimal=$useDecimal,useDate=$useDate,filterNull=$filterNull"
-val rootDir = s"file:///data/sf$scaleFactor-$format/useDecimal=$useDecimal,useDate=$useDate,filterNull=$filterNull"
+val rootDir = s"file:///data/input/useDecimal=$useDecimal,useDate=$useDate,filterNull=$filterNull"
 //val rootDir = s"file://__IP__/tpcds-data-in/useDecimal=$useDecimal,useDate=$useDate,filterNull=$filterNull"
 // name of database to be created.
 val databaseName = s"tpcds_sf${scaleFactor}"+ s"""_${if (useDecimal) "with" else "no"}decimal"""+ s"""_${if (useDate) "with" else "no"}date"""+ s"""_${if (filterNull) "no" else "with"}nulls"""
