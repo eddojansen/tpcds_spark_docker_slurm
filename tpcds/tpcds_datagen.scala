@@ -33,7 +33,7 @@ val shuffle = true
 // s3/dbfs path to generate the data to.
 // val rootDir = s"s3a://spark-rapids-tpcds/tpcds/sf$scaleFactor-$format/useDecimal=$useDecimal,useDate=$useDate,filterNull=$filterNull"
 //val rootDir = s"hdfs://10.150.224.213:9000/data/tpcds_sf$scaleFactor-$format/useDecimal=$useDecimal,useDate=$useDate,filterNull=$filterNull"
-val rootDir = s"file:///data/input/useDecimal=$useDecimal,useDate=$useDate,filterNull=$filterNull"
+val rootDir = s"file:///mnt/nvdl/datasets/tpcds/tpcds_sf$scaleFactor-$format/useDecimal=$useDecimal,useDate=$useDate,filterNull=$filterNull"
 //val rootDir = s"file://__IP__/tpcds-data-in/useDecimal=$useDecimal,useDate=$useDate,filterNull=$filterNull"
 // name of database to be created.
 val databaseName = s"tpcds_sf${scaleFactor}"+ s"""_${if (useDecimal) "with" else "no"}decimal"""+ s"""_${if (useDate) "with" else "no"}date"""+ s"""_${if (filterNull) "no" else "with"}nulls"""
@@ -44,7 +44,7 @@ val databaseName = s"tpcds_sf${scaleFactor}"+ s"""_${if (useDecimal) "with" else
 // Create the table schema with the specified parameters.
 import com.databricks.spark.sql.perf.tpcds.TPCDSTables
 val sqlContext = spark.sqlContext
-val tables = new TPCDSTables(sqlContext, dsdgenDir = "/data/tpcds/tpcds-kit/tools", scaleFactor = scaleFactor, useDoubleForDecimal = !useDecimal, useStringForDate = !useDate)
+val tables = new TPCDSTables(sqlContext, dsdgenDir = "/mnt/nvdl/datasets/tpcds/tpcds/tpcds-kit/tools", scaleFactor = scaleFactor, useDoubleForDecimal = !useDecimal, useStringForDate = !useDate)
 
 // COMMAND ----------
 

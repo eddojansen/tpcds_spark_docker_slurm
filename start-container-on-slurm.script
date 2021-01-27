@@ -7,9 +7,9 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH packjob
-#SBATCH --partition=3090
+#SBATCH --partition=3080
 #SBATCH --time=04:00:00
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 
 ## Show ouput
@@ -93,23 +93,23 @@ MASTER=`hostname`
 ## Set TPCDS home
 export TPCDS_HOME="${MOUNT}/tpcds"
 
- mkdir -p ${MOUNT}/conf
- chown -R $(id -u):$(id -g) ${MOUNT}/conf
- cp wait-worker.sh ${MOUNT}/conf/wait-worker.sh
- chmod +x ${MOUNT}/conf/wait-worker.sh
- cp kill* ${MOUNT}/conf
- chmod +x ${MOUNT}/conf/kill*.sh
- cp -r tpcds ${MOUNT}/
- chown -R $(id -u):$(id -g) ${MOUNT}/tpcds
- chmod +x ${MOUNT}/tpcds/datagen.sh
- chmod +x ${MOUNT}/tpcds/run-tpcds.sh
- chmod +x ${MOUNT}/tpcds/tpcds-kit/tools/dsdgen
- cp -r sparkRapidsPlugin ${MOUNT}/
- chown -R $(id -u):$(id -g) ${MOUNT}/sparkRapidsPlugin
- mkdir -p ${MOUNT}/history
- chown -R $(id -u):$(id -g) ${MOUNT}/history
- mkdir -p ${MOUNT}/spark-warehouse
- chown -R $(id -u):$(id -g) ${MOUNT}/spark-warehouse
+mkdir -p ${MOUNT}/conf
+##chown -R $(id -u):$(id -g) ${MOUNT}/conf
+cp wait-worker.sh ${MOUNT}/conf/wait-worker.sh
+chmod +x ${MOUNT}/conf/wait-worker.sh
+cp kill* ${MOUNT}/conf
+chmod +x ${MOUNT}/conf/kill*.sh
+cp -r tpcds ${MOUNT}/
+##chown -R $(id -u):$(id -g) ${MOUNT}/tpcds
+chmod +x ${MOUNT}/tpcds/datagen.sh
+chmod +x ${MOUNT}/tpcds/run-tpcds.sh
+chmod +x ${MOUNT}/tpcds/tpcds-kit/tools/dsdgen
+cp -r sparkRapidsPlugin ${MOUNT}/
+##chown -R $(id -u):$(id -g) ${MOUNT}/sparkRapidsPlugin
+mkdir -p ${MOUNT}/history
+##chown -R $(id -u):$(id -g) ${MOUNT}/history
+mkdir -p ${MOUNT}/spark-warehouse
+##chown -R $(id -u):$(id -g) ${MOUNT}/spark-warehouse
 
 ## Set RAPIDS dir name
 SPARK_RAPIDS_DIR="${MOUNT}/sparkRapidsPlugin"
@@ -222,6 +222,7 @@ srun --pack-group=0 -n 1 -N 1 -w `hostname` docker run -dit \
 -e SPARK_RAPIDS_PLUGIN_JAR="${SPARK_RAPIDS_PLUGIN_JAR}" \
 -e SPARK_RAPIDS_PLUGIN_INTEGRATION_TEST_JAR="${SPARK_RAPIDS_PLUGIN_INTEGRATION_TEST_JAR}" \
 -e SPARK_CUDF_JAR="${SPARK_CUDF_JAR}" \
+-e SPARK_SQL_JAR="${SPARK_SQL_JAR}" \
 -e BENCHMARK="${BENCHMARK}" \
 -e ITERATIONS="${ITERATIONS}" \
 -e QUERY="${QUERY}" \
@@ -267,7 +268,7 @@ then
 fi
 
 ## Run for TPCDS Benchmark
-srun --pack-group=0 -n 1 -N 1 -w `hostname` docker exec -i master /bin/sh -c 'cd ${TPCDS_HOME}; ./run-tpcds.sh'
+##srun --pack-group=0 -n 1 -N 1 -w `hostname` docker exec -i master /bin/sh -c 'cd ${TPCDS_HOME}; ./run-tpcds.sh'
 
 ## Keep cluster alive for additional testing or review
 #sleep infinity
