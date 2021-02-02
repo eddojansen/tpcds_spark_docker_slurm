@@ -108,6 +108,11 @@ export TPCDS_HOME="${CONFIG_MOUNT}/tpcds-kit/tools"
 IDU=$(id -u)
 IDG=$(id -g)
 
+mkdir -p ${CONFIG_MOUNT}/job/${SLURM_JOB_ID}
+mkdir -p ${CONFIG_MOUNT}/job/${SLURM_JOB_ID}/conf
+mkdir -p ${CONFIG_MOUNT}/job/${SLURM_JOB_ID}/results
+mkdir -p ${CONFIG_MOUNT}/job/${SLURM_JOB_ID}/history
+
 ## Check & remove stale job config directories
 echo Checking for stale job directories
 
@@ -119,15 +124,9 @@ JOBS=( "${JOBS/$j}" )
 done
 
 echo deletinge the following directories: ${JOBS}
-
 for j in ${JOBS}; do
         rm -rf ${CONFIG_MOUNT}/job/${j}
 done
-
-mkdir -p ${CONFIG_MOUNT}/job/${SLURM_JOB_ID}
-mkdir -p ${CONFIG_MOUNT}/job/${SLURM_JOB_ID}/conf
-mkdir -p ${CONFIG_MOUNT}/job/${SLURM_JOB_ID}/results
-mkdir -p ${CONFIG_MOUNT}/job/${SLURM_JOB_ID}/history
 
 if [ ! -f "${CONFIG_MOUNT}/tpcds-kit/tools/dsdgen" ]
 then
