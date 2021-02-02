@@ -2,7 +2,7 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=ejansen@nvidia.com
 #SBATCH --output=outfile-%J
-#SBATCH --partition=3080
+#SBATCH --partition=A6000
 #SBATCH --time=04:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
@@ -117,13 +117,13 @@ mkdir -p ${CONFIG_MOUNT}/job/${SLURM_JOB_ID}/history
 echo Checking for stale job directories
 
 JOBS=$(ls -x ${CONFIG_MOUNT}/job)
-QUEUE=$(squeue |awk '(NR>1) {print $1}')
+QUEUE=$(squeue |awk '(NR>1) {print $1}'|sed 's/[+].*$//' |sort -u)
 
 for j in ${QUEUE}; do
-JOBS=( "${JOBS/$j}" )
+JOBS=("${JOBS/$j}" )
 done
 
-echo deletinge the following directories: ${JOBS}
+echo deleting the following directories: ${JOBS}
 for j in ${JOBS}; do
         rm -rf ${CONFIG_MOUNT}/job/${j}
 done
