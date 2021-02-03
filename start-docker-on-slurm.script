@@ -9,7 +9,7 @@
 #SBATCH packjob
 #SBATCH --partition=3090
 #SBATCH --time=04:00:00
-#SBATCH --nodes=1
+#SBATCH --nodes=16
 #SBATCH --ntasks-per-node=1
 
 ## Show ouput
@@ -63,8 +63,6 @@ OUTPUT_FORMAT="parquet"
 ## TPCDS test settings
 BENCHMARK="tpcds"
 ITERATIONS=1
-##QUERY="q1 q2"
-##QUERY="q1 q2 q3 q4 q5 q6 q7 q8 q9 q10"
 QUERY="q1 q2 q3 q4 q5 q6 q7 q8 q9 q10 \
  q11 q12 q13 q15 q17 q18 q19 \
  q20 q21 q22 q25 q26 q27 q28 q29 \
@@ -203,7 +201,6 @@ if [ ${ENABLE_GPU} = "false" ]
        CONCURRENTGPU=1
   else 
        GPU_PER_NODE=$(srun --pack-group=1 -n 1 -N 1 nvidia-smi -L |grep -c GPU)
-##       GPU_PER_NODE=2
        DOCKER_GPUS="all"
        NUM_EXECUTORS=$(( ${GPU_PER_NODE} * ${SLURM_JOB_NUM_NODES_PACK_GROUP_1} ))
        EXECUTOR_MEMORY=$(( ${SPARK_WORKER_MEMORY} / ${GPU_PER_NODE} ))
@@ -406,9 +403,7 @@ srun --pack-group=0 -n 1 -N 1 -w `hostname` docker exec -i master /bin/sh -c 'cd
 echo "testing complete, please check tpcds-benchmark-results-$SLURM_JOB_ID for relevent output data." 
 srun --pack-group=0 -n 1 -N 1 -w `hostname` bash -c 'if [ $(docker ps |grep -c master) -eq 1 ] ; then docker kill master && echo "killing master"; fi'
 srun --pack-group=1 --ntasks="${SLURM_JOB_NUM_NODES_PACK_GROUP_1}" bash -c 'if [ $(docker ps |grep -c worker) -eq 1 ] ; then docker kill worker && echo "killing worker"; fi'
-##srun --pack-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mkdir tpcds-benchmark-results-${SLURM_JOB_ID}
 srun --pack-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mv ${CONFIG_MOUNT}/job/${SLURM_JOB_ID} tpcds-benchmark-results-${SLURM_JOB_ID}
 srun --pack-group=0 -n 1 -N 1 --gpus=0 -w `hostname` mv outfile-${SLURM_JOB_ID} tpcds-benchmark-results-${SLURM_JOB_ID}/
-##srun --pack-group=0 -n 1 -N 1 --gpus=0 -w `hostname` rm -rf ${CONFIG_MOUNT}/${SLURM_JOB_ID}
 
 echo "Collection & Cleanup complete, bye bye.."
